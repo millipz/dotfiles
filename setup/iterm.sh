@@ -1,13 +1,16 @@
 taps=(
-    caskroom/versions
-    caskroom/fonts
+    homebrew/cask-versions
+    homebrew/cask-fonts
+    buo/cask-upgrade
 )
 
 brew=(
     antigen
     direnv
+    exa
     fzf
     mackup
+    node
     reattach-to-user-namespace
     ripgrep
     tmux
@@ -20,21 +23,15 @@ brew=(
 cask=(
     1password
     alfred
-    iterm2-nightly
+    iterm2
 )
 
 fonts=(
-    font-inconsolata
-    font-fira-code
+    font-fira-code-nerd-font
+    font-fira-mono-nerd-font
+    font-lato
 )
 
-gem=(
-    tmuxinator
-)
-
-npm=(
-    tern
-)
 
 # Create iCloud alias
 ln -s ~/Library/Mobile\ Documents/com~apple~CloudDocs ~/iCloud
@@ -63,16 +60,11 @@ do
     brew cask install $i
 done
 
-brew cleanup --force
-brew cask cleanup
-brew pin python
-
-gem install ${gem[@]}
-npm install -g ${npm[@]}
+brew cleanup
 
 # Setup Mackup
-ln -s ~/iCloud/.mackup/.mackup ~/
-ln -s ~/iCloud/.mackup/.mackup.cfg ~/
+ln -s ~/iCloud/.mackup-sync/.mackup ~/
+ln -s ~/iCloud/.mackup-sync/.mackup.cfg ~/
 mackup restore
 
 # Setup ZSH
@@ -83,8 +75,16 @@ chsh -s /usr/local/bin/zsh
 chmod -R 700 ~/.ssh
 chmod -R 600 ~/.ssh/keys
 
+# add Ruby to path
+sudo perl -pi -e '$_ .= qq(/usr/local/opt/ruby/bin\n) if /\/usr\/local\/bin/' /etc/paths
+
 # Setup Tmux plugin manager - tmux needs to be running at this point
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+~/.tmux/plugins/tpm/bin/install_plugins
 
-# Final message
-printf "\n\nNow run visudo and add the 'Defaults tty_tickets' option\n"
+# create vim directories and install plugins
+mkdir -p "$HOME/.vim/tmp"
+vim +PlugInstall +qall +silent
+
+# open iTerm
+open -a iTerm

@@ -59,6 +59,12 @@ git-undelete() {
     git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"
 }
 
+png() {
+    dt="$1"
+    name=$(echo "$dt" | cut -f 1 -d '.')
+    dot -Tpng -Gdpi=300 "$dt" > "$name.png"
+}
+
 
 log() {
     git log --color --graph --pretty=format:'%Cgreen%h%Creset %C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit $@ | cat -n | less
@@ -73,13 +79,10 @@ lowercase() {
 }
 
 # Log a file with mac notifications
-# run `brew install terminal-notifier` to install terminal-notifier
 logit () {
     clear
     tail -F $1 | while read line; do
         echo "$line"
-        # echo "$line" | sed $'s/$/\a/' # Emit the bell sound
-        # echo "$line" | sed 's/[[:space:]]/\\ /g' | xargs -n 1 terminal-notifier -title $2 -message # Show in notification centre
     done
 }
 
@@ -95,13 +98,6 @@ create () {
     for i do
         \touch $i
     done
-}
-
-# Laravel: create file in app and tests directory
-lt () {
-    filename="$@"
-    create "app/${filename}.php"
-    create "tests/${filename}Test.php"
 }
 
 # Copy In Place: Copies file from directory to same directory
@@ -128,35 +124,12 @@ layout () {
     echo '[tmux layout copied to clipboard]'
 }
 
-# Creates a new Tmux session from within an existing Tmux session
-tnew () {
-    if [[ $# -eq 1 ]]; then
-        TMUX= tmux new-session -d -s $1
-        tmux switch-client -t $1
-        cd ~
-    else
-        display_error 'Session name required'
-    fi
-}
-
 # Stops the current Tmux session and closes any Vagrant/docker machines that might be running
 stop () {
     git push 2> /dev/null
     vagrant halt 2> /dev/null
     docker-compose stop 2> /dev/null
     tmux kill-session -t "$(tmux display-message -p '#S')"
-}
-
-# Runs a single command in Vagrant SSH
-vssh () {
-    command="$@"
-    ssh -t vagrant "cd /var/www && $command"
-}
-
-vsshd () {
-    dir="$1"
-    command="${@:2}"
-    ssh -t vagrant "cd /var/www/$1 && $command"
 }
 
 # Finds a given filename in children directories
@@ -166,6 +139,11 @@ where() {
 
 infile() {
     find . -type f -exec grep -il "$1" {} \;
+}
+
+archive() {
+    tar --exclude='*.DS_Store' --exclude='*/node_modules/*' --exclude='*/vendor/*' -zcvf "$1.tar.gz" "$1"
+    echo "$1 => $1.tar.gz"
 }
 
 # Number of changed files in git commit
@@ -199,40 +177,29 @@ register-vms() {
     ls ~/VirtualBox\ VMs/**/*.vbox | while read vm; do VBoxManage registervm "$vm"; done;
 }
 
-# Markdown to Slides
-slides() {
-    md="$1"
-    name=$(echo "$md" | cut -f 1 -d '.')
-    command="${@:2}"
-    markdown-to-slides "$md" -o "$name".html -l ~/.markdown-to-slides/template.html -s ~/.markdown-to-slides/slides.css -j ~/.markdown-to-slides/slides.js "$command" --include-remark 
-}
-
 complete() {
     f="$1"
     mv "$HOME/.tmuxinator/$f.yml" "$HOME/.tmuxinator/completed/$f.yml"
 }
 
-# remove old casks
-function __clean-cask {
-    caskBasePath="/usr/local/Caskroom"
-    local cask="$1"
-    local caskDirectory="$caskBasePath/$cask"
-    local versionsToRemove="$(ls -r $caskDirectory | sed 1,1d)"
-    if [[ -n $versionsToRemove ]]; then
-        while read versionToRemove ; do
-            echo "Removing $cask $versionToRemove..."
-            rm -rf "$caskDirectory/$versionToRemove"
-        done <<< "$versionsToRemove"
+# ls-changes
+ls-changes() {
+    if [ -z "$1" ]; then
+        display_error "Version required"
+        return
     fi
+
+    git log "$1"..HEAD --pretty=format:'%s' | grep -e ^fix -e ^feat | sed 's/^[^:]*: /- /g'
 }
 
-#call this command to cleanup all, or you can specify cask name
-function cask-retire {
-  if [[ $# -eq 0 ]]; then
-      while read cask; do
-          __clean-cask "$cask"
-      done <<< "$(brew cask list)"
-  else
-      clean-cask "$1"
-  fi
+# find a directory
+quick_find () {
+    dir=$(find /Volumes/Projects -type d -maxdepth 1 | fzf)
+    echo "$dir"
+    cd $dir
+}
+
+# ssl check
+sslcheck () {
+    echo | openssl s_client -connect "$1":443 2>/dev/null | openssl x509 -noout -dates
 }

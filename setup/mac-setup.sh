@@ -1,121 +1,92 @@
-taps=(
-    homebrew/versions
-    homebrew/dupes
-    homebrew/homebrew-php
-)
-
 brew=(
     cmake
+    cmt
     composer
+    ctags-exuberant
     diff-so-fancy
     exiftool
-    flow
-    fontforge
     git
     git-flow
-    graphviz
     grc
+    haskell-stack
+    hub
     icdiff
-    keybase
-    libsass
-    node
-    "php70 --without-apache"
-    php70-mcrypt
-    phpmd
+    php
     php-code-sniffer
     pkg-config
-    proselint
-    purescript
-    randomize-lines
-    ranger
     ruby
     shellcheck
+    taskell
     terminal-notifier
-    tidy-html5
     tree
     the_silver_searcher
     wget
-    yarn
 )
 
 cask=(
+    authy
     backblaze
-    caffeine
-    chefdk
+    chef-workstation
+    carbon-copy-cloner
     dash
     daisydisk
-    divvy
     docker
-    expandrive
     fantastical
-    fluid
-    gpgtools
+    gpg-suite
     google-chrome
-    google-chrome-canary
-    haskell-platform
     istat-menus
-    java
     keybase
-    kitematic
     little-snitch
-    mactex
-    ngrok
-    numi
+    mactex-no-gui
     paw
     qlmarkdown
     quicklook-json
-    sequel-pro
-    skype
     slack
-    spotify
-    sublime-text-dev
-    superduper
-    transmit
-    tunnelbear
     vagrant
     virtualbox
     vmware-fusion
+    visual-studio-code
+    webcatalog
 )
 
 npm=(
-    babel-eslint
-    babel-cli
-    browser-sync
-    bower
-    csslint
-    eslint
-    eslint-plugin-react
     git-recent
-    grunt-cli
-    gulp-cli
     jsonlint
-    loadtest
-    markdown-to-slides
-    pulp
-    karma-cli
+    stylelint
+    stylelint-config-standard
     trash-cli
-    webpack
 )
 
 gem=(
+    tmuxinator
     bundler
-    css_lint
-    scss_lint
-    capistrano
     mdl
 )
 
+composer=(
+    "laravel/installer"
+)
+
 pip=(
-    grip
+    grip # markdown to github-style HTML
+    pygments
+    pygments-lexer-babylon
     vim-vint
     yamllint
+)
+
+stack=(
+    ghcid
+    hfmt
+    hindent
+    hlint
+    stylish-haskell
 )
 
 vagrant=(
     vagrant-vbguest
     vagrant-hostsupdater
     vagrant-share
-    vagrant-berkshelf
 )
 
 # Install binaries
@@ -134,15 +105,23 @@ do
     brew cask install $i
 done
 
-brew cleanup --force
-brew cask cleanup
+for i in "${npm[@]}"
+do
+    npm install --global $i
+done
 
 gem install ${gem[@]}
-npm install -g ${npm[@]}
 
-sudo easy_install pip
-sudo pip install ${pip[@]}
+# tmuxinator auto-complete
+wget https://raw.githubusercontent.com/tmuxinator/tmuxinator/master/completion/tmuxinator.zsh -O /usr/local/share/zsh/site-functions/_tmuxinator
+
+composer global require ${composer[@]}
+
+pip3 install --user ${pip[@]}
+
+for i in "${stack[@]}"
+do
+    stack install $i
+done
 
 vagrant plugin install ${vagrant[@]}
-
-printf "\n\nCopy across ~/VirtualBox VMs/ and run register-vms\n"
